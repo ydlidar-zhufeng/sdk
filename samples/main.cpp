@@ -28,7 +28,6 @@
 #include <unistd.h>
 using namespace std;
 using namespace ydlidar;
-
 #if defined(_MSC_VER)
 #pragma comment(lib, "ydlidar_driver.lib")
 #endif
@@ -39,6 +38,8 @@ int main(int argc, char *argv[]) {
 
     std::string port;
     std::string baudrate;
+    std::string serial_number;
+    std::string input_frequency;
     int baud = 115200;
     printf("__   ______  _     ___ ____    _    ____  \n");
     printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
@@ -47,6 +48,14 @@ int main(int argc, char *argv[]) {
     printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
     printf("\n");
     fflush(stdout);
+    float frequency = 6.0;
+    int number = 1;
+//    if(argc == 3){
+//        if(string(argv[1]).find("pwm")!= string::npos){
+//            if(string(argv[2]).find("0") != string::npos)
+//                number = 0;
+//        }
+//    }
 
     std::map<std::string, std::string> lidars = YDlidarDriver::lidarPortList();
 
@@ -59,6 +68,24 @@ int main(int argc, char *argv[]) {
         printf("Please enter the lidar serial baud rate:");
         std::cin >> baudrate;
         baud = atoi(baudrate.c_str());
+        printf("Please enter the pwd serial number [0 or 1]:");
+        std::cin >> serial_number;
+        number = atoi(serial_number.c_str());
+      
+        while (true) {
+          printf("Please enter the lidar scan frequency[5-12]:");
+          std::cin >> input_frequency;
+          frequency = atof(input_frequency.c_str());
+      
+          if (frequency <= 12 && frequency >= 5.0) {
+            break;
+          }
+      
+          fprintf(stderr,
+                  "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
+        }
+       
+        
     }
 
     if (!ydlidar::ok()) {
@@ -68,7 +95,7 @@ int main(int argc, char *argv[]) {
     CYdLidar laser;
     laser.setSerialPort(port);
     laser.setSerialBaudrate(baud);
-    laser.setScanFrequency(6.0);
+    laser.setScanFrequency(frequency);
     laser.setFixedResolution(false);
     laser.setReversion(false);
     laser.setAutoReconnect(true);
@@ -79,13 +106,14 @@ int main(int argc, char *argv[]) {
     //  laser.setIntensity(0);
     //  laser.setSerialBaudrate(115200);
     //带信号强度的雷达
-      laser.setSerialBaudrate(153600);
-      laser.setIntensity(1);
+    laser.setSerialBaudrate(153600);
+    laser.setIntensity(1);
+    laser.initPwdPath(number);
 
     CYdLidar::PIDError error = laser.initPIDParams();
+    string error_str =  laser.getErrorString(error);
     if (error != NoError){
-        printf("error:%d",error);
-        printf("init pid config failed!");
+        printf("init pid config failed!,error:%s",error_str.c_str());
         fflush(stdout);
         return 1;
     }

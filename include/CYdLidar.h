@@ -97,6 +97,15 @@ class YDLIDAR_API CYdLidar {
   //Turn off the motor enable and close the scan
   bool  turnOff(); //!< See base class docs
 
+  //!<Power off the lidar
+  int  PoweroffPWM();
+
+  // exchange error to error_string
+  string getErrorString(int error);
+
+  //initialize pwd path
+  void  initPwdPath(int number);
+
   //get fixed resolution node size
   int getFixedSize() const;
 
@@ -118,11 +127,12 @@ class YDLIDAR_API CYdLidar {
 
   typedef  enum {
       NoError = 0,
-      WritePWM0Error,
-      WritePWM1Error,
+      WriteExportError,
+      WriteEnableError,
       WriteDutyError,
       WritePeriodError,
-      WritePolarityError
+      WriteModeError,
+      WriteUnenabelError,
   } PIDError;
 
   ///<初始化PID调速的参数
@@ -193,6 +203,14 @@ class YDLIDAR_API CYdLidar {
   LidarVersion           m_LidarVersion;      ///< LiDAR Version information
   int16_t                    default_mode_duty;
   bool                   sn_status;
+
+  string            ExportPath;
+  string            PeriodPath;
+  string            DutyPath;
+  string            ModePath;
+  string            EnablePath;
+  string            PWMExportPath;
+  string            UnexportPath;
 
 };	// End of class
 

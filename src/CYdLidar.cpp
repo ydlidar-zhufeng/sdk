@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 //#include "impl/unix/list_ports_linux.cpp"
 
 using namespace std;
@@ -106,67 +107,38 @@ lidar_error_t CYdLidar::getDriverError() const {
 CYdLidar::PIDError  CYdLidar::initPIDParams(){
    PIDError error = NoError;
    int fd =0,len = -1;
-   string pwd0path = PWD0Path;
-   string pwd1path = PWD1Path;
-   string dutypath = DutyPath;
-   string periodpath = PeriodPath;
-   string modepath = ModePath;
-   if(!path_exists(pwd0path)){
-       fd  = open(pwd0path.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+   if(!path_exists(PWMExportPath)){
+    //   printf("PWMExportPath:%s,ExportPath:%s\n",PWMExportPath.c_str(),ExportPath.c_str());
+   //    printf("export not exist\n");
+       fflush(stdout);
+       fd  = open(ExportPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
        if(fd == -1){
-           error = WritePWM0Error;
+           error = WriteExportError;
            return error;
        }
-       string str = "0";
+       char a  = '0';
        //char * a = "0";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
+       len = write(fd,(void*)&a,sizeof (char));
        close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WritePWM0Error;
-           return error;
+
+       fflush(stdout);
+       if(len != sizeof (char)){
+           printf("write export failed\n");
+          // error = WriteExportError;
+          // return error;
        }
 
    }
 
    {
-       fd  = open(pwd1path.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WritePWM1Error;
-           return error;
-       }
-
-       string str = "1";
-       //char * a = "0";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WritePWM1Error;
-           return error;
-       }
-
-       fd  = open(dutypath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WriteDutyError;
-           return error;
-       }
-
-       str.clear();
-       str = "6000";
-       //char * a = "0";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WriteDutyError;
-           return error;
-       }
-
-       fd  = open(periodpath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+       fd  = open(PeriodPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
        if(fd == -1){
            error = WritePeriodError;
            return error;
        }
-       str.clear();
-       str = "20000";
+
+       //str.clear();
+       string str = "20000";
        //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
        close(fd);
@@ -175,18 +147,55 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
            return error;
        }
 
-       fd  = open(modepath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+       fd  = open(DutyPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
        if(fd == -1){
-           error = WritePolarityError;
+           error = WriteDutyError;
            return error;
        }
        str.clear();
-       str = "1";
+       str = "12000";
+       //char * a = "0";
+       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
+       close(fd);
+       if(len != sizeof (str.c_str())){
+           error = WriteDutyError;
+           return error;
+       }
+
+       fd  = open(ModePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+       if(fd == -1){
+           error = WriteModeError;
+           return error;
+       }
+       str.clear();
+       str = "normal";
        //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));;
        close(fd);
        if(len != sizeof (str.c_str())){
-           error = WritePolarityError;
+           error = WriteModeError;
+           return error;
+       }
+
+    //   printf("enablePath:%s\n",EnablePath.c_str());
+       fd  = open(EnablePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+       if(fd == -1){
+      //     printf("open enable failed\n");
+       //    fflush(stdout);
+           error = WriteEnableError;
+           return error;
+       }
+
+       str.clear();
+       str = "1";
+       //char * a = "0";
+       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
+       //len = write(fd,(void*)&str.,sizeof(char));
+       close(fd);
+       if(len != sizeof (str.c_str())){
+
+           printf("write enable failed,size:%d\n",len);
+           error = WriteEnableError;
            return error;
        }
    }
@@ -205,15 +214,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     hardwareError = false;
     return false;
   }
-
   //  wait Scan data:
   float tim_scan_start = getHDTimer(); //getTime();
   laser_packages.points.clear();
   result_t op_result = lidarPtr->grabScanData(&laser_packages);
   if(!sn_status){
       if(laser_packages.info.size < 13 || laser_packages.info.valid != 0x01){
-          printf("ct.size:%d, valid:%d\n",laser_packages.info.size,laser_packages.info.valid);
-          printf("ct packet size less than 13 or ct packet is invalid\n");
+      //    printf("ct.size:%d, valid:%d\n",laser_packages.info.size,laser_packages.info.valid);
+      //    printf("ct packet size less than 13 or ct packet is invalid\n");
           fflush(stdout);
           goto end;
         //  ans = RESULT_FAIL;
@@ -328,6 +336,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     if (laser_packages.info.info[0] > 0) {
       scan_msg.lidar_scan_frequency = laser_packages.info.info[0] / 10.0;
     }
+ //   printf("laser_packages.info.info[0]:%d,scan_msg.lidar_scan_frequency:%f\n",laser_packages.info.info[0],scan_msg.lidar_scan_frequency);
 
 //    if (!checkHealth(laser_packages.info)) {
     if (lidarPtr->getDriverError() != NoError) {
@@ -377,27 +386,40 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     static  int16_t  LastErr = 0;
     static  int16_t  PreErr  = 0;
 
+ 
     if(getHDTimer() - TickCNT >= 100){
-     //   printf("开始更新increase:%02x",laser_packages.info.info[0]);
+     //   printf("开始更新increase:%d\n",laser_packages.info.info[0]);
         TickCNT = getHDTimer();
-        CurErr = (int16_t)(laser_packages.info.info[0] /10) - 6; ///> 当前频率减去获取到的频率，固定设置频率为6，
-        increase = (int16_t)(PID_P * (CurErr - LastErr) + PID_I* CurErr + PID_D * (CurErr -2* LastErr) + PreErr);
+        CurErr = (int16_t)(laser_packages.info.info[0] *10) - ((int)m_ScanFrequency) * 100; ///> 当前频率减去获取到的频率，固定设置频率为6，
+        increase = (int16_t)(PID_P * (CurErr - LastErr) *1.0 + PID_I* CurErr *1.0 + PID_D * (CurErr -2* LastErr+ PreErr));
+     //   printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
+        PreErr = LastErr;
+        LastErr = CurErr;
+        string value;
+        int writeDuty = default_mode_duty + increase;
+        if(default_mode_duty + increase > 19900){
+            writeDuty = 19900;
+        }else if (default_mode_duty + increase < 50){
+            writeDuty = 50;
+        }else{
+
+        }
+        value = to_string(writeDuty);
+
+        //sprintf(value,"%d",writeDuty);
+       // printf("写入值:%d\n",increase);
+        std::string  dutypath = DutyPath;
+        int fd = open(dutypath.c_str(),O_WRONLY | O_CREAT);
+        if(fd != -1){
+           int len = write(fd,value.c_str(),sizeof(value.c_str()));
+           close(fd);
+           if (len != sizeof (value)){
+               printf("write duty failed\n");
+               fflush(stdout);
+           }
+        }
     }
-    PreErr = LastErr;
-    LastErr = CurErr;
-    char *value = new char[10];
-    sprintf(value,"%d",default_mode_duty + increase);
-   // printf("写入值:%d\n",increase);
-    std::string  dutypath = DutyPath;
-    int fd = open(dutypath.c_str(),O_WRONLY | O_CREAT);
-    if(fd != -1){
-       int len = write(fd,value,sizeof(value));
-       close(fd);
-       if (len != sizeof (value)){
-           printf("write duty failed\n");
-           fflush(stdout);
-       }
-    }
+
 
     return true;
 
@@ -470,6 +492,84 @@ bool  CYdLidar::turnOn() {
   return true;
 }
 
+
+//
+void  CYdLidar::initPwdPath(int number){
+    string serial = "pwmchip1";
+    if(number != 1)
+        serial = "pwmchip0";
+    EnablePath = string("/sys/class/pwm/") + serial + string("/pwm0/enable");
+    ExportPath = string("/sys/class/pwm/") + serial + string("/export");
+    PWMExportPath = string("/sys/class/pwm/") + serial + string("/pwm0/export");
+    PeriodPath = string("/sys/class/pwm/") + serial + string("/pwm0/period");
+    DutyPath = string("/sys/class/pwm/") + serial + string("/pwm0/duty_cycle");
+    ModePath = string("/sys/class/pwm/") + serial + string("/pwm0/polarity");
+    UnexportPath = string("/sys/class/pwm/") + serial + string("/unexport");
+}
+
+/*-------------------------------------------------------------
+                        turnoffPWM
+-------------------------------------------------------------*/
+int  CYdLidar::PoweroffPWM(){
+    PIDError  error = NoError;
+    string str = "0";
+    int fd  = open(EnablePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+    if(fd == -1){
+        error = WriteEnableError;
+        return error;
+    }
+    int len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
+    close(fd);
+    if(len != sizeof (str.c_str())){
+        error = WriteEnableError;
+        return error;
+    }
+
+    fd  = open(UnexportPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
+    if(fd == -1){
+        error =  WriteUnenabelError;
+        return error;
+    }
+    len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
+    close(fd);
+    if(len != sizeof (str.c_str())){
+        error =  WriteUnenabelError;
+        return error;
+    }
+    return  error;
+
+}
+
+//
+string CYdLidar::getErrorString(int error){
+    string error_str;
+    switch (error) {
+      case CYdLidar::NoError:
+        error_str = "";
+        break;
+      case CYdLidar::WriteEnableError:
+        error_str = "write enable error!";
+        break;
+      case CYdLidar::WriteDutyError:
+        error_str = "write duty error!";
+        break;
+      case CYdLidar::WriteModeError:
+        error_str = "write mode error!";
+        break;
+      case CYdLidar::WriteExportError:
+        error_str = "write export error!";
+        break;
+      case CYdLidar::WritePeriodError:
+        error_str = "write period error!";
+        break;
+      case CYdLidar::WriteUnenabelError:
+        error_str = "write unenable error!";
+        break;
+    }
+    return error_str;
+}
+
+
 /*-------------------------------------------------------------
 						turnOff
 -------------------------------------------------------------*/
@@ -484,7 +584,11 @@ bool  CYdLidar::turnOff() {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
     fflush(stdout);
   }
-
+  int  rlt = PoweroffPWM();
+  string err_str = getErrorString(rlt);
+  if(rlt != 0){
+      printf("power off the lidar failed ,error:%s",err_str.c_str());
+  }
   isScanning = false;
   return true;
 }

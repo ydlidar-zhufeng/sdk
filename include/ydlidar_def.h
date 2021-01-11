@@ -32,11 +32,7 @@
 #define PID_P   0.6
 #define PID_I   0.1
 #define PID_D   0
-#define  PWD0Path    "/sys/class/pwm/pwmchip1/export"
-#define  PWD1Path    "/sys/class/pwm/pwmchip1/pwm0/enable"
-#define  PeriodPath  "/sys/class/pwm/pwmchip1/pwm0/period"
-#define  DutyPath    "/sys/class/pwm/pwmchip1/pwm0/duty_cycle"
-#define  ModePath    "/sys/class/pwm/pwmchip1/pwm0/polarity"
+
 //#define  PWD0Path    "/root/test/export"
 //#define  PWD1Path    "/root/test/pwm0/enable"
 //#define  PeriodPath  "/root/test/pwm0/period"
