@@ -405,26 +405,31 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     static  int16_t  LastErr = 0;
     static  int16_t  PreErr  = 0;
     static  int16_t  writeDuty = default_mode_duty;
-
+    int interger_size = 4;
 
     if(getHDTimer() - TickCNT >= 100){
     //    printf("开始更新increase:%d\n",laser_packages.info.info[0]);
         TickCNT = getHDTimer();
-        CurErr = (int16_t)(((int)m_ScanFrequency) * 100 - laser_packages.info.info[0] *10); ///> 当前频率减去获取到的频率，固定设置频率为6，
-        increase = (int16_t)(PID_P * (CurErr - LastErr) *1.0 + PID_I* CurErr *1.0 + PID_D * (CurErr -2* LastErr+ PreErr));
-    //    printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
-        PreErr = LastErr;
-        LastErr = CurErr;
-
-        writeDuty += increase*20;
-        int interger_size = get_int_size(writeDuty);
-        if(default_mode_duty + increase > 19900){
-            writeDuty = 19900;
-        }else if (default_mode_duty + increase < 50){
-            writeDuty = 50;
+        if(laser_packages.info.info[0] == 0){
+            writeDuty = default_mode_duty;
         }else{
+            CurErr = (int16_t)(((int)m_ScanFrequency) * 100 - laser_packages.info.info[0] *10); ///> 当前频率减去获取到的频率，固定设置频率为6，
+            increase = (int16_t)(PID_P * (CurErr - LastErr) *1.0 + PID_I* CurErr *1.0 + PID_D * (CurErr -2* LastErr+ PreErr));
+        //    printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
+            PreErr = LastErr;
+            LastErr = CurErr;
 
+            writeDuty += increase;
+            interger_size = get_int_size(writeDuty);
+            if(default_mode_duty + increase > 19900){
+                writeDuty = 19900;
+            }else if (default_mode_duty + increase < 50){
+                writeDuty = 50;
+            }else{
+
+            }
         }
+
         char a[10];
         memset(a,0,10);
         sprintf(a,"%d",writeDuty);;

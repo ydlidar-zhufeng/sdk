@@ -68,9 +68,9 @@ int main(int argc, char *argv[]) {
         printf("Please enter the lidar serial baud rate:");
         std::cin >> baudrate;
         baud = atoi(baudrate.c_str());
-        printf("Please enter the pwd serial number [0 or 1]:");
-        std::cin >> serial_number;
-        number = atoi(serial_number.c_str());
+//        printf("Please enter the pwd serial number [0 or 1]:");
+//        std::cin >> serial_number;
+//        number = atoi(serial_number.c_str());
       
 //        while (true) {
 //          printf("Please enter the lidar scan frequency[5-12]:");
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
                     printf("LiDAR HW Version: %d, Fireware Version: %u.%u,FW Version: %u.%u.%u, SN: ", _version.hardware,_version.fire_major,_version.fire_minor,
                            _version.soft_major, _version.soft_minor, _version.soft_patch);
 
-                    for (int i = 0; i < 16; i++) {
+                    for (int i = 0; i < 32; i++) {
                         printf("%01X", _version.sn[i]);
                     }
 

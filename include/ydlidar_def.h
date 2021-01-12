@@ -29,8 +29,8 @@
 
 #define SUNNOISEINTENSITY 0x03
 #define GLASSNOISEINTENSITY 0x02
-#define PID_P   0.6
-#define PID_I   0.1
+#define PID_P   5
+#define PID_I   0.8
 #define PID_D   0
 
 //#define  PWD0Path    "/root/test/export"
