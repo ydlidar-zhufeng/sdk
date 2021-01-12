@@ -272,8 +272,8 @@ result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
     this->setDriverError(err);
 
     if (!IS_OK(ans)) {
-      printf("[YDLIDAR ERROR][Device health]: %s\n",
-             ydlidar::protocol::DescribeError(err));
+//      printf("[YDLIDAR ERROR][Device health]: %s\n",
+//             ydlidar::protocol::DescribeError(err));
       fflush(stdout);
     }
   }
@@ -302,8 +302,8 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
     this->setDriverError(err);
 
     if (!IS_OK(ans)) {
-      printf("[YDLIDAR ERROR][Device info]: %s\n",
-             ydlidar::protocol::DescribeError(err));
+//      printf("[YDLIDAR ERROR][Device info]: %s\n",
+//             ydlidar::protocol::DescribeError(err));
       fflush(stdout);
     }
   }

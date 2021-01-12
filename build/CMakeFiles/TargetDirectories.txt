@@ -1,0 +1,6 @@
+/opt/code/sdk/build/CMakeFiles/rebuild_cache.dir
+/opt/code/sdk/build/CMakeFiles/edit_cache.dir
+/opt/code/sdk/build/CMakeFiles/ydlidar_driver.dir
+/opt/code/sdk/build/samples/CMakeFiles/rebuild_cache.dir
+/opt/code/sdk/build/samples/CMakeFiles/edit_cache.dir
+/opt/code/sdk/build/samples/CMakeFiles/ydlidar_test.dir

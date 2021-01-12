@@ -215,7 +215,7 @@ typedef struct {
   uint8_t soft_patch;      /**< patch number */
   uint8_t fire_major;
   uint8_t fire_minor;
-  uint8_t sn[16];     /**< serial number*/
+  uint8_t sn[32];     /**< serial number*/
 } LidarVersion;
 
 struct ct_packet_t {

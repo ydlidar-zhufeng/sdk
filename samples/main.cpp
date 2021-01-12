@@ -72,18 +72,18 @@ int main(int argc, char *argv[]) {
         std::cin >> serial_number;
         number = atoi(serial_number.c_str());
       
-        while (true) {
-          printf("Please enter the lidar scan frequency[5-12]:");
-          std::cin >> input_frequency;
-          frequency = atof(input_frequency.c_str());
+//        while (true) {
+//          printf("Please enter the lidar scan frequency[5-12]:");
+//          std::cin >> input_frequency;
+//          frequency = atof(input_frequency.c_str());
       
-          if (frequency <= 12 && frequency >= 5.0) {
-            break;
-          }
+//          if (frequency <= 12 && frequency >= 5.0) {
+//            break;
+//          }
       
-          fprintf(stderr,
-                  "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
-        }
+//          fprintf(stderr,
+//                  "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
+//        }
        
         
     }

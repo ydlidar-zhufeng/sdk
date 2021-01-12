@@ -27,6 +27,23 @@ path_exists(const string &path) {
 
   return false;
 }
+
+int get_int_size(const int &dest);
+int get_int_size(const int &dest){
+    if(dest <10){
+        return 1;
+    }else if(dest <100 && dest >= 10) {
+        return 2;
+    }else if (dest < 1000 && dest >= 100){
+        return 3;
+    }else if(dest <10000 && dest >= 1000){
+        return 4;
+    }else if(dest < 100000 && dest >= 10000){
+        return 5;
+    }else{
+        return 5;
+    }
+}
 /*-------------------------------------------------------------
 						Constructor
 -------------------------------------------------------------*/
@@ -153,7 +170,7 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
            return error;
        }
        str.clear();
-       str = "12000";
+       str = "6000";
        //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
        close(fd);
@@ -247,23 +264,25 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       p_sn->sn3 = (laser_packages.info.info[11]) & 0x03;
       p_sn->sn4 = (laser_packages.info.info[10]) & 0x07;
       p_sn->sn5 = (laser_packages.info.info[9]) & 0x03;
+      printf("size of lidarVersion.sn:%d",sizeof (m_LidarVersion.sn));
+      memset(m_LidarVersion.sn,0,sizeof (m_LidarVersion.sn));
 
-      m_LidarVersion.sn[0] = year/1000;
-      m_LidarVersion.sn[1] = (year%1000) /100;
-      m_LidarVersion.sn[2] = (year%100) /10;
-      m_LidarVersion.sn[3] = year%10;
-      m_LidarVersion.sn[4] = month /10;
-      m_LidarVersion.sn[5] = month %10;
-      m_LidarVersion.sn[6] = day /10;
-      m_LidarVersion.sn[7] = day %10;
-      m_LidarVersion.sn[8] = 0;
-      m_LidarVersion.sn[9] = 0;
-      m_LidarVersion.sn[10] = 0;
-      m_LidarVersion.sn[11] = sn_ / 10000;
-      m_LidarVersion.sn[12] = (sn_ % 10000) / 1000;
-      m_LidarVersion.sn[13] = (sn_ % 1000) / 100;
-      m_LidarVersion.sn[14] = (sn_ % 100) / 10 ;
-      m_LidarVersion.sn[15] = sn_ % 10 ;
+      m_LidarVersion.sn[0+16] = year/1000;
+      m_LidarVersion.sn[1+16] = (year%1000) /100;
+      m_LidarVersion.sn[2+16] = (year%100) /10;
+      m_LidarVersion.sn[3+16] = year%10;
+      m_LidarVersion.sn[4+16] = month /10;
+      m_LidarVersion.sn[5+16] = month %10;
+      m_LidarVersion.sn[6+16] = day /10;
+      m_LidarVersion.sn[7+16] = day %10;
+//      m_LidarVersion.sn[8+16] = 0;
+//      m_LidarVersion.sn[9+16] = 0;
+//      m_LidarVersion.sn[10+16] = 0;
+      m_LidarVersion.sn[11+16] = sn_ / 10000;
+      m_LidarVersion.sn[12+16] = (sn_ % 10000) / 1000;
+      m_LidarVersion.sn[13+16] = (sn_ % 1000) / 100;
+      m_LidarVersion.sn[14+16] = (sn_ % 100) / 10 ;
+      m_LidarVersion.sn[15+16] = sn_ % 10 ;
 
 
       int8_t Major = (laser_packages.info.info[1] >> 5) & 0x03;
@@ -281,7 +300,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       m_LidarVersion.fire_minor = FireMinor;
    //   printf("1:%02x，4:%02x，5:%02x",laser_packages.info.info[1],laser_packages.info.info[4],laser_packages.info.info[5]);
       printf("sn:");
-      for(int i=0;i<16 ;i++){
+      for(int i=0;i<32 ;i++){
           printf(" %x",m_LidarVersion.sn[i]);
       }
       printf("\n");
@@ -385,18 +404,20 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     static  int16_t  CurErr = 0;
     static  int16_t  LastErr = 0;
     static  int16_t  PreErr  = 0;
+    static  int16_t  writeDuty = default_mode_duty;
 
- 
+
     if(getHDTimer() - TickCNT >= 100){
-     //   printf("开始更新increase:%d\n",laser_packages.info.info[0]);
+    //    printf("开始更新increase:%d\n",laser_packages.info.info[0]);
         TickCNT = getHDTimer();
-        CurErr = (int16_t)(laser_packages.info.info[0] *10) - ((int)m_ScanFrequency) * 100; ///> 当前频率减去获取到的频率，固定设置频率为6，
+        CurErr = (int16_t)(((int)m_ScanFrequency) * 100 - laser_packages.info.info[0] *10); ///> 当前频率减去获取到的频率，固定设置频率为6，
         increase = (int16_t)(PID_P * (CurErr - LastErr) *1.0 + PID_I* CurErr *1.0 + PID_D * (CurErr -2* LastErr+ PreErr));
-     //   printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
+    //    printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
         PreErr = LastErr;
         LastErr = CurErr;
-        string value;
-        int writeDuty = default_mode_duty + increase;
+
+        writeDuty += increase*20;
+        int interger_size = get_int_size(writeDuty);
         if(default_mode_duty + increase > 19900){
             writeDuty = 19900;
         }else if (default_mode_duty + increase < 50){
@@ -404,16 +425,19 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         }else{
 
         }
-        value = to_string(writeDuty);
+        char a[10];
+        memset(a,0,10);
+        sprintf(a,"%d",writeDuty);;
 
         //sprintf(value,"%d",writeDuty);
        // printf("写入值:%d\n",increase);
         std::string  dutypath = DutyPath;
         int fd = open(dutypath.c_str(),O_WRONLY | O_CREAT);
         if(fd != -1){
-           int len = write(fd,value.c_str(),sizeof(value.c_str()));
+           int len = write(fd,a,interger_size);
            close(fd);
-           if (len != sizeof (value)){
+           if (len != interger_size){
+               printf("len:%d,sizeof(value):%d",len,interger_size);
                printf("write duty failed\n");
                fflush(stdout);
            }
@@ -667,9 +691,9 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
   result_t op_result = lidarPtr->getDeviceInfo(devinfo, timeout);
 
   if (!IS_OK(op_result)) {
-    printf("get Device Information Error: %s\n",
-           ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
-    fflush(stdout);
+//    printf("get Device Information Error: %s\n",
+//           ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+//    fflush(stdout);
     return false;
   }
 
